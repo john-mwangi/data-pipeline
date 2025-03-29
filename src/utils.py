@@ -1,10 +1,13 @@
 import logging
 from datetime import date
 from enum import Enum, auto
+from pathlib import Path
 
 import pandera.polars as pa
 
 ALLOWED_COUNTRIES = ["Australia", "India", "USA", "UK", "Canada", "New Zealand"]
+ROOT_DIR = Path(__file__).parent.parent
+SQLITE_DB = ROOT_DIR / "db/pipeline.db"
 
 
 def setup_logging(level=logging.INFO):

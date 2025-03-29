@@ -2,12 +2,17 @@
 
 import logging
 import re
+import sqlite3
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import polars as pl
 import polars.selectors as cs
+from sqlalchemy import create_engine
 
-from utils import CSVInput, CSVOutput, DataType, Source, setup_logging
+from utils import SQLITE_DB, CSVInput, CSVOutput, DataType, Source, setup_logging
 
 setup_logging()
 
@@ -56,7 +61,7 @@ class Pipeline:
         # convert date to iso format
         data = data.with_columns(
             pl.col("date").str.to_date(format="%d-%b-%y").alias("sale_date")
-        )
+        ).drop(["date"])
 
         # convert price to float
         data = data.with_columns(
@@ -67,6 +72,13 @@ class Pipeline:
 
     @staticmethod
     def validate_data(data: pl.LazyFrame) -> dict:
+        # validate schema
+        try:
+            CSVOutput.validate(data.collect(), lazy=True)
+            logger.info("schema validation was successful")
+        except Exception as e:
+            logger.exception(e)
+
         # summary stats on categorical cols
         cat_cols = data.select(pl.col(pl.String())).collect_schema().names()
         logger.info(f"categorical columns: {cat_cols}")
@@ -89,13 +101,6 @@ class Pipeline:
 
             numeric_stats[c] = summary.collect()
 
-        # validate schema
-        try:
-            CSVOutput.validate(data.collect(), lazy=True)
-            logger.info("schema validation was successful")
-        except Exception as e:
-            logger.exception(e)
-
         # dq metrics
         null_count = (
             data.null_count()
@@ -103,18 +108,40 @@ class Pipeline:
             .transpose(include_header=True, column_names=["null_count"])
         )
 
+        # TODO: return bool
         return {
             "categorical_stats": categorical_stats,
             "numeric_stats": numeric_stats,
             "null_count": null_count,
         }
 
-    def save_data(data: pl.LazyFrame):
-        pass
+    def save_data(self, data: pl.LazyFrame):
+        tz = ZoneInfo("UTC")
+        ts = datetime.now(tz)
+        file_name = Path(self.url).stem
+
+        data = data.with_columns(
+            pl.lit(value=file_name).alias("file_name"),
+            pl.lit(value=str(self.url)).alias("source"),
+            pl.lit(value=ts).alias("created_at"),
+            pl.lit(value=ts).alias("modified_at"),
+        )
+
+        if not SQLITE_DB.exists():
+            SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
+
+            with sqlite3.connect(SQLITE_DB) as conn:
+                logger.info(f"database file created at {SQLITE_DB}")
+
+        logger.info(f"saving info to {SQLITE_DB}...")
+        engine = create_engine(f"sqlite:///{SQLITE_DB}")
+
+        data.collect().write_database(
+            table_name=file_name, connection=engine, if_table_exists="append"
+        )
 
 
 if __name__ == "__main__":
-    from pathlib import Path
 
     url = Path("../data/Chocolate Sales.csv").resolve()
 
@@ -131,3 +158,5 @@ if __name__ == "__main__":
     dq_results = pipeline.validate_data(data=proc_data)
     logger.info("dq results")
     logger.info(dq_results)
+
+    pipeline.save_data(proc_data)
