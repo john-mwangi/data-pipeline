@@ -26,7 +26,7 @@ class Pipeline:
     def fetch_data(self) -> pl.LazyFrame:
         logger.info(f"reading data from {url}...")
 
-        datatype = url.split(".")[-1]
+        datatype = url.split("?")[0].split(".")[-1]
         if not datatype in DataType._member_names_:
             msg = f"data type not supported. supported data types are {DataType._member_names_}"
             logger.error(msg)
@@ -158,9 +158,12 @@ class Pipeline:
 
 
 if __name__ == "__main__":
+    import yaml
 
-    url = "../data/Chocolate Sales.json"
+    with open("./config.yaml", mode="r") as f:
+        config = yaml.safe_load(f)
 
+    url = config["pipeline"]["csv_url"]
     pipeline = Pipeline(url=url)
 
     data = pipeline.fetch_data()
