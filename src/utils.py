@@ -44,3 +44,15 @@ class DataInput(pa.DataFrameModel):
     date: str = pa.Field(str_matches=r"\d{2}-[A-Z][a-z]{2}-\d{2}")
     amount: str
     boxes_shipped: int = pa.Field(le=1000)
+
+
+responses = {
+    "SUCCESS": {
+        "status": "SUCCESS_RETRIEVING_DATA",
+        "message": "Successfully retrieved the requested data",
+    },
+    "ERROR": {
+        "status": "ERROR_RETRIEVING_DATA",
+        "message": "There was an error retrieving the requested data",
+    },
+}
