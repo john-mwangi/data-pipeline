@@ -71,14 +71,17 @@ class Pipeline:
         return data
 
     @staticmethod
-    def validate_data(data: pl.LazyFrame) -> dict:
+    def validate_data(data: pl.LazyFrame) -> tuple[bool, dict]:
         # validate schema
         try:
             CSVOutput.validate(data.collect(), lazy=True)
-            logger.info("schema validation was successful")
+            logger.info("data validation was successful")
+            validation_result = True
         except Exception as e:
             logger.exception(e)
+            validation_result = False
 
+        ## dq metrics
         # summary stats on categorical cols
         cat_cols = data.select(pl.col(pl.String())).collect_schema().names()
         logger.info(f"categorical columns: {cat_cols}")
@@ -101,19 +104,21 @@ class Pipeline:
 
             numeric_stats[c] = summary.collect()
 
-        # dq metrics
+        # null count
         null_count = (
             data.null_count()
             .collect()
             .transpose(include_header=True, column_names=["null_count"])
         )
 
-        # TODO: return bool
-        return {
-            "categorical_stats": categorical_stats,
-            "numeric_stats": numeric_stats,
-            "null_count": null_count,
-        }
+        return (
+            validation_result,
+            {
+                "categorical_stats": categorical_stats,
+                "numeric_stats": numeric_stats,
+                "null_count": null_count,
+            },
+        )
 
     def save_data(self, data: pl.LazyFrame):
         tz = ZoneInfo("UTC")
@@ -155,8 +160,9 @@ if __name__ == "__main__":
     logger.info("processed data")
     logger.info(proc_data.collect())
 
-    dq_results = pipeline.validate_data(data=proc_data)
+    dq_result, _ = pipeline.validate_data(data=proc_data)
     logger.info("dq results")
-    logger.info(dq_results)
+    logger.info(dq_result)
 
-    pipeline.save_data(proc_data)
+    if dq_result:
+        pipeline.save_data(proc_data)
