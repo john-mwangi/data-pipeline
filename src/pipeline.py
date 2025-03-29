@@ -12,7 +12,7 @@ import polars as pl
 import polars.selectors as cs
 from sqlalchemy import create_engine
 
-from utils import SQLITE_DB, CSVInput, CSVOutput, DataType, Source, setup_logging
+from utils import SQLITE_DB, CSVInput, CSVOutput, DataType, setup_logging
 
 setup_logging()
 
@@ -22,12 +22,21 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Pipeline:
     url: str
-    source: Source
-    datatype: DataType
 
     def fetch_data(self) -> pl.LazyFrame:
-        if self.source == Source.path and self.datatype == DataType.csv:
+        datatype = url.split(".")[-1]
+        if not datatype in DataType._member_names_:
+            msg = f"data type not supported. supported data types are {DataType._member_names_}"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        self.datatype = datatype
+
+        if datatype == DataType.csv.name:
             data = pl.scan_csv(url)
+
+        if datatype == DataType.json.name:
+            data = pl.read_json(url).lazy()
 
         # clean the column names
         data = data.rename(
@@ -38,7 +47,7 @@ class Pipeline:
         )
 
         # validate input schema
-        if self.datatype == DataType.csv:
+        if datatype == DataType.csv.name:
             try:
                 CSVInput.validate(data.collect(), lazy=True)
             except Exception as e:
@@ -127,10 +136,14 @@ class Pipeline:
 
         data = data.with_columns(
             pl.lit(value=file_name).alias("file_name"),
-            pl.lit(value=str(self.url)).alias("source"),
+            pl.lit(value=self.datatype).alias("data_type"),
+            pl.lit(value=self.url).alias("source"),
             pl.lit(value=ts).alias("created_at"),
             pl.lit(value=ts).alias("modified_at"),
         )
+
+        print(data.collect())
+        exit()
 
         if not SQLITE_DB.exists():
             SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
@@ -148,9 +161,9 @@ class Pipeline:
 
 if __name__ == "__main__":
 
-    url = Path("../data/Chocolate Sales.csv").resolve()
+    url = "../data/Chocolate Sales.json"
 
-    pipeline = Pipeline(url=url, source=Source.path, datatype=DataType.csv)
+    pipeline = Pipeline(url=url)
 
     data = pipeline.fetch_data()
     logger.info("input data")
