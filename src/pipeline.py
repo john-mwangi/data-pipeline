@@ -120,7 +120,7 @@ class Pipeline:
             },
         )
 
-    def save_data(self, data: pl.LazyFrame):
+    def save_data(self, data: pl.LazyFrame, table_name: str = "processed_data"):
         tz = ZoneInfo("UTC")
         ts = datetime.now(tz)
         file_name = Path(self.url).stem
@@ -142,7 +142,7 @@ class Pipeline:
         engine = create_engine(f"sqlite:///{SQLITE_DB}")
 
         data.collect().write_database(
-            table_name="processed_data", connection=engine, if_table_exists="append"
+            table_name=table_name, connection=engine, if_table_exists="append"
         )
 
 
