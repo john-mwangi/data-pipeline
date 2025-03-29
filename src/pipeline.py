@@ -161,8 +161,7 @@ if __name__ == "__main__":
     logger.info(proc_data.collect())
 
     dq_result, _ = pipeline.validate_data(data=proc_data)
-    logger.info("dq results")
-    logger.info(dq_result)
+    logger.info(f"{dq_result=}")
 
     if dq_result:
         pipeline.save_data(proc_data)
