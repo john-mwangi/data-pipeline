@@ -12,7 +12,7 @@ import polars as pl
 import polars.selectors as cs
 from sqlalchemy import create_engine
 
-from utils import SQLITE_DB, CSVInput, CSVOutput, DataType, Source, setup_logging
+from utils import SQLITE_DB, DataInput, DataOutput, DataType, setup_logging
 
 setup_logging()
 
@@ -22,12 +22,23 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Pipeline:
     url: str
-    source: Source
-    datatype: DataType
 
     def fetch_data(self) -> pl.LazyFrame:
-        if self.source == Source.path and self.datatype == DataType.csv:
+        logger.info(f"reading data from {url}...")
+
+        datatype = url.split(".")[-1]
+        if not datatype in DataType._member_names_:
+            msg = f"data type not supported. supported data types are {DataType._member_names_}"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        self.datatype = datatype
+
+        if datatype == DataType.csv.name:
             data = pl.scan_csv(url)
+
+        if datatype == DataType.json.name:
+            data = pl.read_json(url).lazy()
 
         # clean the column names
         data = data.rename(
@@ -38,12 +49,11 @@ class Pipeline:
         )
 
         # validate input schema
-        if self.datatype == DataType.csv:
-            try:
-                CSVInput.validate(data.collect(), lazy=True)
-            except Exception as e:
-                logger.exception(e)
-                raise
+        try:
+            DataInput.validate(data.collect(), lazy=True)
+        except Exception as e:
+            logger.exception(e)
+            raise
 
         return data
 
@@ -74,7 +84,7 @@ class Pipeline:
     def validate_data(data: pl.LazyFrame) -> tuple[bool, dict]:
         # validate schema
         try:
-            CSVOutput.validate(data.collect(), lazy=True)
+            DataOutput.validate(data.collect(), lazy=True)
             logger.info("data validation was successful")
             validation_result = True
         except Exception as e:
@@ -127,7 +137,8 @@ class Pipeline:
 
         data = data.with_columns(
             pl.lit(value=file_name).alias("file_name"),
-            pl.lit(value=str(self.url)).alias("source"),
+            pl.lit(value=self.datatype).alias("data_type"),
+            pl.lit(value=self.url).alias("source"),
             pl.lit(value=ts).alias("created_at"),
             pl.lit(value=ts).alias("modified_at"),
         )
@@ -148,9 +159,9 @@ class Pipeline:
 
 if __name__ == "__main__":
 
-    url = Path("../data/Chocolate Sales.csv").resolve()
+    url = "../data/Chocolate Sales.json"
 
-    pipeline = Pipeline(url=url, source=Source.path, datatype=DataType.csv)
+    pipeline = Pipeline(url=url)
 
     data = pipeline.fetch_data()
     logger.info("input data")
