@@ -12,7 +12,7 @@ import polars as pl
 import polars.selectors as cs
 from sqlalchemy import create_engine
 
-from utils import SQLITE_DB, CSVInput, CSVOutput, DataType, setup_logging
+from utils import SQLITE_DB, DataInput, DataOutput, DataType, setup_logging
 
 setup_logging()
 
@@ -24,6 +24,8 @@ class Pipeline:
     url: str
 
     def fetch_data(self) -> pl.LazyFrame:
+        logger.info(f"reading data from {url}...")
+
         datatype = url.split(".")[-1]
         if not datatype in DataType._member_names_:
             msg = f"data type not supported. supported data types are {DataType._member_names_}"
@@ -47,12 +49,11 @@ class Pipeline:
         )
 
         # validate input schema
-        if datatype == DataType.csv.name:
-            try:
-                CSVInput.validate(data.collect(), lazy=True)
-            except Exception as e:
-                logger.exception(e)
-                raise
+        try:
+            DataInput.validate(data.collect(), lazy=True)
+        except Exception as e:
+            logger.exception(e)
+            raise
 
         return data
 
@@ -83,7 +84,7 @@ class Pipeline:
     def validate_data(data: pl.LazyFrame) -> tuple[bool, dict]:
         # validate schema
         try:
-            CSVOutput.validate(data.collect(), lazy=True)
+            DataOutput.validate(data.collect(), lazy=True)
             logger.info("data validation was successful")
             validation_result = True
         except Exception as e:
@@ -141,9 +142,6 @@ class Pipeline:
             pl.lit(value=ts).alias("created_at"),
             pl.lit(value=ts).alias("modified_at"),
         )
-
-        print(data.collect())
-        exit()
 
         if not SQLITE_DB.exists():
             SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)

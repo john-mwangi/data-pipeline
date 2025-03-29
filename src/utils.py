@@ -26,7 +26,7 @@ class DataType(Enum):
     json = auto()
 
 
-class CSVOutput(pa.DataFrameModel):
+class DataOutput(pa.DataFrameModel):
     sales_person: str = pa.Field(nullable=False)
     country: str = pa.Field(nullable=False, isin=ALLOWED_COUNTRIES)
     product: str
@@ -37,7 +37,7 @@ class CSVOutput(pa.DataFrameModel):
     last_name: str = pa.Field(nullable=False)
 
 
-class CSVInput(pa.DataFrameModel):
+class DataInput(pa.DataFrameModel):
     sales_person: str = pa.Field(nullable=False)
     country: str = pa.Field(nullable=False, isin=ALLOWED_COUNTRIES)
     product: str
