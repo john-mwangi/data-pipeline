@@ -142,7 +142,7 @@ class Pipeline:
         engine = create_engine(f"sqlite:///{SQLITE_DB}")
 
         data.collect().write_database(
-            table_name=file_name, connection=engine, if_table_exists="append"
+            table_name="processed_data", connection=engine, if_table_exists="append"
         )
 
 
