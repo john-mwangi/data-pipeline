@@ -3,3 +3,7 @@ pipeline:
   json_url: https://raw.githubusercontent.com/john-mwangi/data_pipeline/refs/heads/main/data/Chocolate%20Sales.json?token=GHSAT0AAAAAACVRKIF4J6XT3ZOHKEZJFRDMZ7IOPLQ
   destination_table: processed_data
   data_quality: data_quality
+api:
+  admin:
+    username: admin
+    password: admin

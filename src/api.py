@@ -1,12 +1,14 @@
 """This module is for the API. It serves the API endpoints"""
 
 import logging
-from typing import Optional
+import secrets
+from typing import Annotated, Optional
 
 import fastapi
 import yaml
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
@@ -18,12 +20,35 @@ logger = logging.getLogger(__name__)
 
 service_desc = "API for querying the data pipeline"
 app = fastapi.FastAPI(description=service_desc)
-
+security = HTTPBasic()
 
 with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
     config = yaml.safe_load(f)
 
 table_name = config["pipeline"]["destination_table"]
+users = config["api"]["admin"]
+
+
+def get_current_username(
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+):
+    current_username_bytes = credentials.username.encode("utf8")
+    correct_username_bytes = users.get("username").encode("utf8")
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
+    current_password_bytes = credentials.password.encode("utf8")
+    correct_password_bytes = users.get("password").encode("utf8")
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
 
 
 class DataRequest(BaseModel):
@@ -37,7 +62,7 @@ class DataRequest(BaseModel):
     end_date: str = Field(default=None, description="End of the date range")
 
 
-@app.post("/get_data")
+@app.post("/get_data", dependencies=[Depends(get_current_username)])
 def get_data(request: DataRequest):
     """Queries the database table"""
 
@@ -62,3 +87,8 @@ def get_data(request: DataRequest):
         status_code = status.HTTP_400_BAD_REQUEST
 
     return JSONResponse(content=payload, status_code=status_code)
+
+
+@app.get("/users/me")
+def read_current_user(username: Annotated[str, Depends(get_current_username)]):
+    return {"username": username}
