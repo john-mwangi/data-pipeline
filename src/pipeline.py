@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 import polars as pl
 import polars.selectors as cs
+import requests
 import yaml
 from pandera.errors import SchemaErrors
 from sqlalchemy import create_engine
@@ -180,9 +181,17 @@ def main(use_local: bool = False):
     url = config["pipeline"]["csv_url"]
     table_name = config["pipeline"]["destination_table"]
     dq_table = config["pipeline"]["data_quality"]
+    file_exists = requests.head(url).status_code == requests.codes.ok
 
     if use_local:
-        url = str(ROOT_DIR / "data/Chocolate Sales.csv")
+        file_path = ROOT_DIR / "data/Chocolate Sales.csv"
+        url = str(file_path)
+        file_exists = file_path.exists()
+
+    if file_exists == False:
+        msg = "the file does not exist in the specified url"
+        logger.error(msg)
+        raise ValueError(msg)
 
     pipeline = Pipeline(url=url)
 
