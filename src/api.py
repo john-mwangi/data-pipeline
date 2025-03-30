@@ -5,7 +5,7 @@ from typing import Optional
 
 import fastapi
 import yaml
-from fastapi import status
+from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
@@ -56,7 +56,7 @@ def get_data(request: DataRequest):
         payload = {"data": data, **responses.get("SUCCESS")}
         status_code = status.HTTP_200_OK
 
-    except Exception as e:
+    except HTTPException as e:
         logger.exception(e)
         payload = {"data": None, **responses.get("ERROR")}
         status_code = status.HTTP_400_BAD_REQUEST

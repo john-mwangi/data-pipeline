@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 
 import polars as pl
 import polars.selectors as cs
+from pandera.errors import SchemaErrors
 from sqlalchemy import create_engine
 
 from utils import SQLITE_DB, DataInput, DataOutput, DataType, setup_logging
@@ -26,7 +27,10 @@ class Pipeline:
     def fetch_data(self) -> pl.LazyFrame:
         logger.info(f"reading data from {url}...")
 
-        datatype = url.split("?")[0].split(".")[-1]
+        datatype = self.url.split(".")[-1]
+        if self.url.__contains__("token="):
+            datatype = self.url.split("?")[0].split(".")[-1]
+
         if not datatype in DataType._member_names_:
             msg = f"data type not supported. supported data types are {DataType._member_names_}"
             logger.error(msg)
@@ -51,7 +55,7 @@ class Pipeline:
         # validate input schema
         try:
             DataInput.validate(data.collect(), lazy=True)
-        except Exception as e:
+        except SchemaErrors as e:
             logger.exception(e)
             raise
 
@@ -82,12 +86,12 @@ class Pipeline:
 
     @staticmethod
     def validate_data(data: pl.LazyFrame) -> tuple[bool, dict]:
-        # validate schema
+        # validate output schema
         try:
             DataOutput.validate(data.collect(), lazy=True)
             logger.info("data validation was successful")
             validation_result = True
-        except Exception as e:
+        except SchemaErrors as e:
             logger.exception(e)
             validation_result = False
 
@@ -162,10 +166,16 @@ if __name__ == "__main__":
 
     from utils import ROOT_DIR
 
+    USE_LOCAL = True
+
     with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
         config = yaml.safe_load(f)
 
     url = config["pipeline"]["csv_url"]
+
+    if USE_LOCAL:
+        url = "../data/Chocolate Sales.csv"
+
     table_name = config["pipeline"]["destination_table"]
 
     pipeline = Pipeline(url=url)
