@@ -2,6 +2,7 @@
 
 import logging
 import secrets
+from datetime import date, timedelta
 from typing import Annotated, Optional
 
 import fastapi
@@ -34,6 +35,8 @@ table_name = config["pipeline"]["destination_table"]
 users = config["api"]["admin"]
 rate_per_minute = config["api"]["rate_limits"]["per_minute"]
 rate_per_second = config["api"]["rate_limits"]["per_second"]
+start_time = str(date.today()) + " 00:00:00"
+end_time = str(date.today() + timedelta(days=1)) + " 00:00:00"
 
 
 def get_current_username(
@@ -60,13 +63,12 @@ def get_current_username(
 
 class RequestParams(BaseModel):
     source_table: str = Field(default=table_name, description="Source database table")
-    start_index: int = Field(ge=0, description="Starting index for pagination")
-    end_index: int = Field(ge=0, description="Ending index for pagination")
     limit: Optional[int] = Field(
         default=5, le=1000, description="Number of records to fetch"
     )
-    start_date: str = Field(default=None, description="Start of the date range")
-    end_date: str = Field(default=None, description="End of the date range")
+    start_date: str = Field(default=start_time, description="Start of the date range")
+    end_date: str = Field(default=end_time, description="End of the date range")
+    cursor: Optional[int] = Field(default=None, description="The last seen record id")
 
 
 @app.post("/get_data", dependencies=[Depends(get_current_username)])
@@ -76,7 +78,20 @@ def get_data(params: RequestParams, request: Request):
     """Queries the database table"""
 
     engine = create_engine(f"sqlite:///{SQLITE_DB}")
-    query = f"SELECT * FROM {params.source_table} LIMIT {params.limit}"
+    base_query = f"SELECT * FROM {params.source_table}"
+
+    filters = []
+    if params.start_date:
+        filters.append(f"created_at >= '{params.start_date}'")
+    if params.end_date:
+        filters.append(f"created_at <= '{params.end_date}'")
+    if params.cursor:
+        filters.append(f"id > {params.cursor}")
+
+    where_clause = f" WHERE {' AND '.join(filters)}" if filters else ""
+    query = f"{base_query}{where_clause} ORDER BY id, created_at LIMIT {params.limit};"
+
+    logger.info(f"executing query: {query}")
 
     try:
         logger.info("fetching records from the database...")
@@ -87,7 +102,8 @@ def get_data(params: RequestParams, request: Request):
             logger.warning("no records returned")
 
         data = [dict(row._mapping) for row in res]
-        payload = {"data": data, **responses.get("SUCCESS")}
+        next_cursor = data[-1]["id"] if data else None
+        payload = {"data": data, "next_cursor": next_cursor, **responses.get("SUCCESS")}
         status_code = status.HTTP_200_OK
 
     except HTTPException as e:

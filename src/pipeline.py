@@ -147,6 +147,21 @@ class Pipeline:
         return validation_result, dq_results
 
     def save_data(self, data: pl.LazyFrame, table_name: str):
+        if not SQLITE_DB.exists():
+            SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
+
+            sqlite3.connect(SQLITE_DB)
+            logger.info(f"database file created at {SQLITE_DB}")
+
+        try:
+            last_id = (
+                sqlite3.connect(SQLITE_DB)
+                .execute(f"SELECT COUNT(*) as last_id FROM {table_name}")
+                .fetchone()[0]
+            )
+        except Exception as e:
+            last_id = 0
+
         data = data.with_columns(
             pl.lit(value=self.run_id).alias("run_id"),
             pl.lit(value=self.file_name).alias("file_name"),
@@ -154,13 +169,7 @@ class Pipeline:
             pl.lit(value=self.url).alias("source"),
             pl.lit(value=self.start_time).alias("created_at"),
             pl.lit(value=self.start_time).alias("modified_at"),
-        )
-
-        if not SQLITE_DB.exists():
-            SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
-
-            sqlite3.connect(SQLITE_DB)
-            logger.info(f"database file created at {SQLITE_DB}")
+        ).with_row_count(name="id", offset=last_id + 1)
 
         logger.info(f"saving info to {table_name} table...")
         engine = create_engine(f"sqlite:///{SQLITE_DB}")
