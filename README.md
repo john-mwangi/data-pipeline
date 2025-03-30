@@ -64,7 +64,7 @@ flowchart TD
    * Perfect for ETL workloads with its expressive API
    * Outperforms pandas for large datasets
 
-2. **FastAPI (Web Framework)**
+2. **FastAPI (API Framework)**
    * Modern Python framework with excellent performance
    * Automatic OpenAPI/Swagger documentation
    * Built-in data validation with Pydantic
@@ -146,7 +146,9 @@ python main.py --api_only
     * `cursor`: Pagination cursor
 * `GET /users/me` - Basic authentication test endpoint
 
-## Authentication
+## Access & Authentication
+The API will be available at `http://localhost:12000` by default. For the Swagger documentation, visit `http://localhost:12000/docs`.
+
 Use Basic Auth with credentials from config.yaml (default: admin/admin)
 
 ## Data Schemas

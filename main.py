@@ -64,3 +64,4 @@ if __name__ == "__main__":
 
 # python main.py --use_local
 # python main.py --api_only
+# python main.py # run api with remote sources
