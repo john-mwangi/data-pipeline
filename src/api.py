@@ -6,10 +6,12 @@ from typing import Annotated, Optional
 
 import fastapi
 import yaml
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import create_engine, text
 
 from .utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
@@ -21,12 +23,17 @@ logger = logging.getLogger(__name__)
 service_desc = "API for querying the data pipeline"
 app = fastapi.FastAPI(description=service_desc)
 security = HTTPBasic()
+limiter = Limiter(
+    key_func=get_remote_address, strategy="fixed-window", storage_uri="memory://"
+)
 
 with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
     config = yaml.safe_load(f)
 
 table_name = config["pipeline"]["destination_table"]
 users = config["api"]["admin"]
+rate_per_minute = config["api"]["rate_limits"]["per_minute"]
+rate_per_second = config["api"]["rate_limits"]["per_second"]
 
 
 def get_current_username(
@@ -51,7 +58,7 @@ def get_current_username(
     return credentials.username
 
 
-class DataRequest(BaseModel):
+class RequestParams(BaseModel):
     source_table: str = Field(default=table_name, description="Source database table")
     start_index: int = Field(ge=0, description="Starting index for pagination")
     end_index: int = Field(ge=0, description="Ending index for pagination")
@@ -63,11 +70,13 @@ class DataRequest(BaseModel):
 
 
 @app.post("/get_data", dependencies=[Depends(get_current_username)])
-def get_data(request: DataRequest):
+@limiter.limit(f"{rate_per_second}/second", per_method=True)
+@limiter.limit(f"{rate_per_minute}/minute", per_method=True)
+def get_data(params: RequestParams, request: Request):
     """Queries the database table"""
 
     engine = create_engine(f"sqlite:///{SQLITE_DB}")
-    query = f"SELECT * FROM {request.source_table} LIMIT {request.limit}"
+    query = f"SELECT * FROM {params.source_table} LIMIT {params.limit}"
 
     try:
         logger.info("fetching records from the database...")

@@ -7,3 +7,6 @@ api:
   admin:
     username: admin
     password: admin
+  rate_limits:
+    per_minute: 30
+    per_second: 1
