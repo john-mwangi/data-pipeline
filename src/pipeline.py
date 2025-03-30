@@ -35,6 +35,7 @@ class Pipeline:
         self.start_time = start_time
         self.run_id = uuid4().hex
 
+        print("\n")
         logger.info(f"reading data from {self.url}...")
 
         file_type = self.url.split(".")[-1]
@@ -52,7 +53,7 @@ class Pipeline:
             data = pl.scan_csv(self.url)
 
         if file_type == FileType.json.name:
-            data = pl.read_json(self).lazy()
+            data = pl.read_json(self.url).lazy()
 
         # clean the column names
         data = data.rename(
@@ -183,24 +184,23 @@ class Pipeline:
             logger.exception(e)
 
 
-def main(use_local: bool = False):
+def main(url: str = None, use_local: bool = False, file_path: Path = None):
     with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
         config = yaml.safe_load(f)
 
-    url = config["pipeline"]["csv_url"]
     table_name = config["pipeline"]["destination_table"]
     dq_table = config["pipeline"]["data_quality"]
-    file_exists = requests.head(url).status_code == requests.codes.ok
+
+    if url is not None:
+        file_exists = requests.head(url).status_code == requests.codes.ok
 
     if use_local:
-        file_path = ROOT_DIR / "data/Chocolate Sales.csv"
         url = str(file_path)
         file_exists = file_path.exists()
 
     if file_exists == False:
-        msg = "the file does not exist in the specified url"
+        msg = f"the file does not exist in the specified {url}"
         logger.error(msg)
-        raise ValueError(msg)
 
     pipeline = Pipeline(url=url)
 
