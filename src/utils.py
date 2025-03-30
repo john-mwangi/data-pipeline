@@ -16,11 +16,6 @@ def setup_logging(level=logging.INFO):
     )
 
 
-class Source(Enum):
-    sftp = auto()
-    path = auto()
-
-
 class FileType(Enum):
     csv = auto()
     json = auto()
