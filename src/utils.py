@@ -21,7 +21,7 @@ class Source(Enum):
     path = auto()
 
 
-class DataType(Enum):
+class FileType(Enum):
     csv = auto()
     json = auto()
 

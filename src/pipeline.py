@@ -17,7 +17,7 @@ from pandera.errors import SchemaErrors
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
-from utils import SQLITE_DB, DataInput, DataOutput, DataType, setup_logging
+from utils import SQLITE_DB, DataInput, DataOutput, setup_logging
 
 setup_logging()
 
@@ -36,21 +36,21 @@ class Pipeline:
 
         logger.info(f"reading data from {url}...")
 
-        datatype = self.url.split(".")[-1]
+        FileType = self.url.split(".")[-1]
         if self.url.__contains__("token="):
-            datatype = self.url.split("?")[0].split(".")[-1]
+            FileType = self.url.split("?")[0].split(".")[-1]
 
-        if not datatype in DataType._member_names_:
-            msg = f"data type not supported. supported data types are {DataType._member_names_}"
+        if not FileType in FileType._member_names_:
+            msg = f"data type not supported. supported data types are {FileType._member_names_}"
             logger.error(msg)
             raise ValueError(msg)
 
-        self.datatype = datatype
+        self.FileType = FileType
 
-        if datatype == DataType.csv.name:
+        if FileType == FileType.csv.name:
             data = pl.scan_csv(url)
 
-        if datatype == DataType.json.name:
+        if FileType == FileType.json.name:
             data = pl.read_json(url).lazy()
 
         # clean the column names
@@ -149,7 +149,7 @@ class Pipeline:
         data = data.with_columns(
             pl.lit(value=self.run_id).alias("run_id"),
             pl.lit(value=self.file_name).alias("file_name"),
-            pl.lit(value=self.datatype).alias("data_type"),
+            pl.lit(value=self.FileType).alias("data_type"),
             pl.lit(value=self.url).alias("source"),
             pl.lit(value=self.start_time).alias("created_at"),
             pl.lit(value=self.start_time).alias("modified_at"),
