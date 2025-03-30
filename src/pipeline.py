@@ -130,7 +130,7 @@ class Pipeline:
             },
         )
 
-    def save_data(self, data: pl.LazyFrame, table_name: str = "processed_data"):
+    def save_data(self, data: pl.LazyFrame, table_name: str):
         tz = ZoneInfo("UTC")
         ts = datetime.now(tz)
         file_name = Path(self.url).stem
@@ -160,10 +160,14 @@ class Pipeline:
 if __name__ == "__main__":
     import yaml
 
-    with open("./config.yaml", mode="r") as f:
+    from utils import ROOT_DIR
+
+    with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
         config = yaml.safe_load(f)
 
     url = config["pipeline"]["csv_url"]
+    table_name = config["pipeline"]["destination_table"]
+
     pipeline = Pipeline(url=url)
 
     data = pipeline.fetch_data()
@@ -178,4 +182,4 @@ if __name__ == "__main__":
     logger.info(f"{dq_result=}")
 
     if dq_result:
-        pipeline.save_data(proc_data)
+        pipeline.save_data(data=proc_data, table_name=table_name)

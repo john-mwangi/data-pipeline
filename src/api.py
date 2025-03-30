@@ -4,12 +4,13 @@ import logging
 from typing import Optional
 
 import fastapi
+import yaml
 from fastapi import status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
-from utils import SQLITE_DB, responses, setup_logging
+from utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
 
 setup_logging()
 
@@ -19,8 +20,14 @@ service_desc = "API for querying the data pipeline"
 app = fastapi.FastAPI(description=service_desc)
 
 
+with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
+    config = yaml.safe_load(f)
+
+table_name = config["pipeline"]["destination_table"]
+
+
 class DataRequest(BaseModel):
-    source: str = Field(default="processed_data", description="Source database table")
+    source: str = Field(default=table_name, description="Source database table")
     start_index: int = Field(ge=0, description="Starting index for pagination")
     end_index: int = Field(ge=0, description="Ending index for pagination")
     limit: Optional[int] = Field(
