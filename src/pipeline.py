@@ -201,6 +201,8 @@ def main(use_local: bool = False):
         pipeline.save_data(data=proc_data, table_name=table_name)
         pipeline.save_data(data=dq_metrics, table_name=dq_table)
 
+    logger.info(f"pipeline with id {pipeline.run_id} completed")
+
 
 if __name__ == "__main__":
     main()

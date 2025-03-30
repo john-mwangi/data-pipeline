@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
-from utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
+from .utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
 
 setup_logging()
 
@@ -27,7 +27,7 @@ table_name = config["pipeline"]["destination_table"]
 
 
 class DataRequest(BaseModel):
-    source: str = Field(default=table_name, description="Source database table")
+    source_table: str = Field(default=table_name, description="Source database table")
     start_index: int = Field(ge=0, description="Starting index for pagination")
     end_index: int = Field(ge=0, description="Ending index for pagination")
     limit: Optional[int] = Field(
@@ -42,7 +42,7 @@ def get_data(request: DataRequest):
     """Queries the database table"""
 
     engine = create_engine(f"sqlite:///{SQLITE_DB}")
-    query = f"SELECT * FROM {request.source} LIMIT {request.limit}"
+    query = f"SELECT * FROM {request.source_table} LIMIT {request.limit}"
 
     try:
         logger.info("fetching records from the database...")
