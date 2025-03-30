@@ -1,17 +1,21 @@
 """This module is for the pipeline. It fectches processes and validates the data"""
 
+import json
 import logging
 import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 import polars as pl
 import polars.selectors as cs
+import yaml
 from pandera.errors import SchemaErrors
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 
 from utils import SQLITE_DB, DataInput, DataOutput, DataType, setup_logging
 
@@ -25,6 +29,11 @@ class Pipeline:
     url: str
 
     def fetch_data(self) -> pl.LazyFrame:
+        tz = ZoneInfo("UTC")
+        start_time = datetime.now(tz)
+        self.start_time = start_time
+        self.run_id = uuid4().hex
+
         logger.info(f"reading data from {url}...")
 
         datatype = self.url.split(".")[-1]
@@ -55,6 +64,7 @@ class Pipeline:
         # validate input schema
         try:
             DataInput.validate(data.collect(), lazy=True)
+            self.file_name = Path(self.url).stem
         except SchemaErrors as e:
             logger.exception(e)
             raise
@@ -85,7 +95,7 @@ class Pipeline:
         return data
 
     @staticmethod
-    def validate_data(data: pl.LazyFrame) -> tuple[bool, dict]:
+    def validate_data(data: pl.LazyFrame) -> tuple[bool, pl.LazyFrame]:
         # validate output schema
         try:
             DataOutput.validate(data.collect(), lazy=True)
@@ -103,7 +113,7 @@ class Pipeline:
         categorical_stats = {}
         for c in cat_cols:
             summary = data.select(pl.col(c).value_counts(sort=True))
-            categorical_stats[c] = summary.collect()
+            categorical_stats[c] = summary.collect().to_dicts()
 
         # summary stats on numeric data
         numeric_cols = data.select(cs.numeric()).collect_schema().names()
@@ -116,54 +126,54 @@ class Pipeline:
                 pl.col(c).min().alias(f"{c}_min"),
             )
 
-            numeric_stats[c] = summary.collect()
+            numeric_stats[c] = summary.collect().to_dicts()
 
         # null count
         null_count = (
             data.null_count()
             .collect()
             .transpose(include_header=True, column_names=["null_count"])
-        )
+        ).to_dicts()
 
-        return (
-            validation_result,
-            {
-                "categorical_stats": categorical_stats,
-                "numeric_stats": numeric_stats,
-                "null_count": null_count,
-            },
-        )
+        dq_metrics = {
+            "categorical_stats": json.dumps(categorical_stats),
+            "numeric_stats": json.dumps(numeric_stats),
+            "null_count": json.dumps(null_count),
+        }
+
+        dq_results = pl.LazyFrame(dq_metrics)
+
+        return validation_result, dq_results
 
     def save_data(self, data: pl.LazyFrame, table_name: str):
-        tz = ZoneInfo("UTC")
-        ts = datetime.now(tz)
-        file_name = Path(self.url).stem
-
         data = data.with_columns(
-            pl.lit(value=file_name).alias("file_name"),
+            pl.lit(value=self.run_id).alias("run_id"),
+            pl.lit(value=self.file_name).alias("file_name"),
             pl.lit(value=self.datatype).alias("data_type"),
             pl.lit(value=self.url).alias("source"),
-            pl.lit(value=ts).alias("created_at"),
-            pl.lit(value=ts).alias("modified_at"),
+            pl.lit(value=self.start_time).alias("created_at"),
+            pl.lit(value=self.start_time).alias("modified_at"),
         )
 
         if not SQLITE_DB.exists():
             SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
 
-            with sqlite3.connect(SQLITE_DB) as conn:
-                logger.info(f"database file created at {SQLITE_DB}")
+            sqlite3.connect(SQLITE_DB)
+            logger.info(f"database file created at {SQLITE_DB}")
 
-        logger.info(f"saving info to {SQLITE_DB}...")
+        logger.info(f"saving info to {table_name} table...")
         engine = create_engine(f"sqlite:///{SQLITE_DB}")
 
-        data.collect().write_database(
-            table_name=table_name, connection=engine, if_table_exists="append"
-        )
+        try:
+            data.collect().write_database(
+                table_name=table_name, connection=engine, if_table_exists="append"
+            )
+
+        except OperationalError as e:
+            logger.exception(e)
 
 
 if __name__ == "__main__":
-    import yaml
-
     from utils import ROOT_DIR
 
     USE_LOCAL = True
@@ -172,11 +182,11 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     url = config["pipeline"]["csv_url"]
+    table_name = config["pipeline"]["destination_table"]
+    dq_table = config["pipeline"]["data_quality"]
 
     if USE_LOCAL:
         url = "../data/Chocolate Sales.csv"
-
-    table_name = config["pipeline"]["destination_table"]
 
     pipeline = Pipeline(url=url)
 
@@ -188,8 +198,9 @@ if __name__ == "__main__":
     logger.info("processed data")
     logger.info(proc_data.collect())
 
-    dq_result, _ = pipeline.validate_data(data=proc_data)
+    dq_result, dq_metrics = pipeline.validate_data(data=proc_data)
     logger.info(f"{dq_result=}")
 
     if dq_result:
         pipeline.save_data(data=proc_data, table_name=table_name)
+        pipeline.save_data(data=dq_metrics, table_name=dq_table)
