@@ -95,14 +95,33 @@ This combination provides:
 
 ## Project Structure
 ```
-├── .gitignore
-├── data/                   # Sample data files
-├── main.py                 # Entry point for pipeline and API
-└── src/
-    ├── api.py              # FastAPI implementation
-    ├── config.yaml         # Configuration file
-    ├── pipeline.py         # Data processing pipeline
-    └── utils.py            # Shared utilities and schemas
+├── .gitignore                 
+├── README.md                  # Project documentation
+├── api.png                    # API screenshot
+├── data_pipeline/             # Python package
+    │
+    ├── db/                    
+    │   └── pipeline.db        # Main SQLite database
+    ├── output/                
+    │   └── processed_data.csv # Sample processed data
+    │
+    ├── data/                  # Sample data inputs
+    │   ├── Chocolate Sales.csv  
+    │   └── Chocolate Sales.json
+    │
+    ├── main.py                # Entry point
+    │
+    ├── src/                   
+    │   ├── api.py             # FastAPI implementation
+    │   ├── config.yaml        # Configuration file
+    │   ├── pipeline.py        # Data processing pipeline
+    │   └── utils.py           # Shared utilities and schemas
+    │
+    └── tests/                 # Test suite
+        ├── test_api.py        # API endpoint tests
+        └── test_pipeline.py   # Data pipeline validation tests
+├── pyproject.toml             # Package configuration
+└── requirements.txt           # Package requirements
 ```
 
 ## Installation
@@ -110,7 +129,7 @@ This combination provides:
 * Python 3.12 (required)
 * pip (Python package manager)
 
-## Installation Steps**
+## Installation Steps
 1. Clone the repository:
 ```bash
 git clone https://github.com/john-mwangi/data_pipeline
