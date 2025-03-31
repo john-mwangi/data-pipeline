@@ -96,7 +96,6 @@ This combination provides:
 ## Project Structure
 ```
 ├── .gitignore
-├── db/                     # Sample SQLite database
 ├── data/                   # Sample data files
 ├── main.py                 # Entry point for pipeline and API
 └── src/
@@ -115,7 +114,6 @@ This combination provides:
 1. Clone the repository:
 ```bash
 git clone https://github.com/john-mwangi/data_pipeline
-cd data_pipeline
 ```
 
 2. Create and activate a virtual environment (recommended):
@@ -132,6 +130,9 @@ pip install -r requirements.txt
 ## Usage
 Running the Pipeline and API.
 ```bash
+# cd to main.py directory
+cd data_pipeline/data_pipeline
+
 # Run both pipeline and API (using remote data sources)
 python main.py
 
@@ -142,21 +143,7 @@ python main.py --use_local
 python main.py --api_only
 ```
 
-## API Endpoints
-* `POST /get_data` - Retrieve sales data (requires authentication)
-  * Parameters:
-    * `limit`: Number of records to return (max 1000)
-    * `start_date, end_date`: Date range filter
-    * `cursor`: Pagination cursor
-* `GET /users/me` - Basic authentication test endpoint
-
-## Access & Authentication
-The API will be available at `http://localhost:12000` by default. For the 
-Swagger documentation, visit `http://localhost:12000/docs`.
-
-Use Basic Auth with credentials from config.yaml (default: admin/admin)
-
-## Data Schemas
+## Pipeline
 ### Input Schema
 * sales_person: string
 * country: string (must be in allowed countries list)
@@ -180,6 +167,25 @@ The pipeline calculates and stores:
 
 ## Logging
 All operations are logged with timestamps and severity levels.
+
+## API 
+### Endpoints
+* `POST /get_data` - Retrieve sales data (requires authentication)
+  * Parameters:
+    * `limit`: Number of records to return (max 1000)
+    * `start_date, end_date`: Date range filter
+    * `cursor`: Pagination cursor
+* `GET /users/me` - Basic authentication test endpoint
+
+### Access & Authentication
+The API will be available at `http://localhost:12000` by default.
+
+Use Basic Auth with credentials from config.yaml (default: admin/admin)
+
+### Documentation
+The Swagger documentation is available at `http://localhost:12000/docs`.
+
+![alt text](api.png "An image of the API")
 
 ## Testing
 pytest is used for comprehensive testing.
