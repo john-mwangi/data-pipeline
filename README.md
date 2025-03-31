@@ -133,6 +133,7 @@ This combination provides:
 1. Clone the repository:
 ```bash
 git clone https://github.com/john-mwangi/data_pipeline
+cd data_pipeline
 ```
 
 2. Create and activate a virtual environment (recommended):
@@ -150,7 +151,7 @@ pip install -r requirements.txt
 Running the Pipeline and API.
 ```bash
 # cd to main.py directory
-cd data_pipeline/data_pipeline
+cd data_pipeline
 
 # Run both pipeline and API (using remote data sources)
 python main.py
