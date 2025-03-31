@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-pipeline"
+version = "0.0.1"
+authors = [
+  { name="John Mwangi", email="john.mwangi@live.com" },
+]
+description = "An app for processing and serving sales data"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Repository = "https://github.com/john-mwangi/data_pipeline"
+
+# ref: https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+[tool.setuptools.packages.find]
+include = ["data_pipeline*"]
+exclude = ["docs*", "tests*", "files", "*.env"]
+
+# ref: https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml"]

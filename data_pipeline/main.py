@@ -5,9 +5,9 @@ import logging
 import uvicorn
 import yaml
 
-from src.api import app
-from src.pipeline import main as pipeline_main
-from src.utils import ROOT_DIR, setup_logging
+from data_pipeline.src.api import app
+from data_pipeline.src.pipeline import main as pipeline_main
+from data_pipeline.src.utils import ROOT_DIR, setup_logging
 
 setup_logging()
 

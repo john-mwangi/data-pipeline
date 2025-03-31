@@ -15,7 +15,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import create_engine, text
 
-from .utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
+from data_pipeline.src.utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
 
 setup_logging()
 

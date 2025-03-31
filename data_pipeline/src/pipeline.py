@@ -10,6 +10,7 @@ from pathlib import Path
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
+import pandas as pd
 import polars as pl
 import polars.selectors as cs
 import requests
@@ -18,7 +19,14 @@ from pandera.errors import SchemaErrors
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
-from .utils import ROOT_DIR, SQLITE_DB, DataInput, DataOutput, FileType, setup_logging
+from data_pipeline.src.utils import (
+    ROOT_DIR,
+    SQLITE_DB,
+    DataInput,
+    DataOutput,
+    FileType,
+    setup_logging,
+)
 
 setup_logging()
 
@@ -53,7 +61,8 @@ class Pipeline:
             data = pl.scan_csv(self.url)
 
         if file_type == FileType.json.name:
-            data = pl.read_json(self.url).lazy()
+            df = pd.read_json(self.url, convert_axes=False, convert_dates=False)
+            data = pl.from_pandas(df).lazy()
 
         # clean the column names
         data = data.rename(
@@ -170,7 +179,7 @@ class Pipeline:
             pl.lit(value=self.url).alias("source"),
             pl.lit(value=self.start_time).alias("created_at"),
             pl.lit(value=self.start_time).alias("modified_at"),
-        ).with_row_count(name="id", offset=last_id + 1)
+        ).with_row_index(name="id", offset=last_id + 1)
 
         logger.info(f"saving info to {table_name} table...")
         engine = create_engine(f"sqlite:///{SQLITE_DB}")
@@ -220,7 +229,3 @@ def main(url: str = None, use_local: bool = False, file_path: Path = None):
         pipeline.save_data(data=dq_metrics, table_name=dq_table)
 
     logger.info(f"pipeline with id {pipeline.run_id} completed")
-
-
-if __name__ == "__main__":
-    main()
