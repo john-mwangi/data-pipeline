@@ -49,3 +49,4 @@ def test_pipeline_process_data(local_files):
 
 def test_main(local_files):
     main(file_path=Path(local_files["csv"]), use_local=True)
+    main(file_path=Path(local_files["json"]), use_local=True)
