@@ -1,6 +1,9 @@
-# Chocolate Sales Data Pipeline and API
+# Data Pipeline and API
 ## Overview
-This repository contains a data pipeline and API for processing and serving chocolate sales data. The system fetches data from CSV/JSON sources, processes and validates it, stores it in a SQLite database, and provides a secure API for querying the data.
+This repository contains a data pipeline and API for processing and serving 
+sales data. The system fetches data from CSV/JSON sources, processes and 
+validates it, stores it in a SQLite database, and provides a secure API for 
+querying the data.
 
 ## Features
 ### Data Pipeline:
@@ -9,6 +12,7 @@ This repository contains a data pipeline and API for processing and serving choc
 * Validates data against schemas
 * Calculates data quality metrics
 * Stores processed data in SQLite database
+
 ### REST API:
 * Basic authentication
 * Rate limiting
@@ -99,7 +103,7 @@ This combination provides:
     ├── api.py              # FastAPI implementation
     ├── config.yaml         # Configuration file
     ├── pipeline.py         # Data processing pipeline
-    └── utils.py           # Shared utilities and schemas
+    └── utils.py            # Shared utilities and schemas
 ```
 
 ## Installation
@@ -110,8 +114,8 @@ This combination provides:
 ## Installation Steps**
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-repo/chocolate-sales-pipeline.git
-cd chocolate-sales-pipeline
+git clone https://github.com/john-mwangi/data_pipeline
+cd data_pipeline
 ```
 
 2. Create and activate a virtual environment (recommended):
@@ -147,7 +151,8 @@ python main.py --api_only
 * `GET /users/me` - Basic authentication test endpoint
 
 ## Access & Authentication
-The API will be available at `http://localhost:12000` by default. For the Swagger documentation, visit `http://localhost:12000/docs`.
+The API will be available at `http://localhost:12000` by default. For the 
+Swagger documentation, visit `http://localhost:12000/docs`.
 
 Use Basic Auth with credentials from config.yaml (default: admin/admin)
 
@@ -179,5 +184,5 @@ All operations are logged with timestamps and severity levels.
 ## Testing
 pytest is used for comprehensive testing.
 ```bash
-pytest tests/ --cov=src --cov-report=term-missing
+pytest tests/test_pipeline.py tests/test_api.py -vs
 ```
