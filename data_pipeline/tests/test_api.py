@@ -19,7 +19,7 @@ def client():
 def auth_header():
     with open(ROOT_DIR / "src/config.yaml") as f:
         config = yaml.safe_load(f)
-    username = config["api"]["admin"]["username"]  # fixed: use username key
+    username = config["api"]["admin"]["username"]
     password = config["api"]["admin"]["password"]
     credentials = f"{username}:{password}"
     encoded = base64.b64encode(credentials.encode()).decode()

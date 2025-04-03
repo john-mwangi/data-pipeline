@@ -44,7 +44,7 @@ class Pipeline:
         self.run_id = uuid4().hex
 
         print("\n")
-        logger.info(f"reading data from {self.url}...")
+        logger.info(f"reading data from {self.url}")
 
         file_type = self.url.split(".")[-1]
         if self.url.__contains__("token="):

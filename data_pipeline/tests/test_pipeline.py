@@ -5,16 +5,15 @@ import pytest
 import yaml
 
 from data_pipeline.src.pipeline import Pipeline, main
-from data_pipeline.src.utils import ROOT_DIR, DataOutput
+from data_pipeline.src.utils import ROOT_DIR, DataOutput, FileType
 
 
 @pytest.fixture
 def local_files():
     data_dir = ROOT_DIR / "data"
-    return {
-        "csv": str(data_dir / "Chocolate Sales.csv"),
-        "json": str(data_dir / "Chocolate Sales.json"),
-    }
+    paths = list(data_dir.glob("*"))
+    file_types = [p.suffix.replace(".", "") for p in paths]
+    return {k: str(v) for k, v in zip(file_types, paths)}
 
 
 @pytest.fixture
@@ -26,10 +25,15 @@ def remote_urls():
 
 def test_pipeline_with_local_files(local_files):
     for file_type, path in local_files.items():
-        pipeline = Pipeline(path)
-        data = pipeline.fetch_data()
-        assert isinstance(data, pl.LazyFrame)
-        assert data.collect().height > 0
+        if file_type in FileType._member_names_:
+            pipeline = Pipeline(path)
+            data = pipeline.fetch_data()
+            assert isinstance(data, pl.LazyFrame)
+            assert data.collect().height > 0
+        else:
+            with pytest.raises(ValueError):
+                pipeline = Pipeline(path)
+                data = pipeline.fetch_data()
 
 
 def test_pipeline_with_remote_files(remote_urls):
@@ -48,5 +52,6 @@ def test_pipeline_process_data(local_files):
 
 
 def test_main(local_files):
-    main(file_path=Path(local_files["csv"]), use_local=True)
-    main(file_path=Path(local_files["json"]), use_local=True)
+    filtered = {k: v for k, v in local_files.items() if k in FileType._member_names_}
+    for _, v in filtered.items():
+        main(file_path=Path(v), use_local=True)

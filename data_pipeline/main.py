@@ -22,7 +22,10 @@ def main(api_only: bool, use_local: bool):
         data_dir = ROOT_DIR / "data"
         paths = list(data_dir.glob("*"))
         for fp in paths:
-            pipeline_main(use_local=use_local, file_path=fp)
+            try:
+                pipeline_main(use_local=use_local, file_path=fp)
+            except Exception as e:
+                logger.exception(e)
 
         uvicorn.run(app="main:app", port=12000, reload=True)
 
