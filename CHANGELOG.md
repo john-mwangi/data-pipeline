@@ -1,3 +1,12 @@
+2025-05-03
+
+Features
+- ae3cf8d: Add changelog script (John Mwangi)
+
+Fixes
+- e0fac40: Minor updates (John Mwangi)
+
+
 2025-04-03
 
 Changes
