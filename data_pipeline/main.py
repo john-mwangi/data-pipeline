@@ -5,9 +5,9 @@ import logging
 import uvicorn
 import yaml
 
-from data_pipeline.src.api import app
+from data_pipeline.src.api import app as app
 from data_pipeline.src.pipeline import main as pipeline_main
-from data_pipeline.src.utils import ROOT_DIR, setup_logging
+from data_pipeline.src.utils import ROOT_DIR, config_path, setup_logging
 
 setup_logging()
 
@@ -30,7 +30,7 @@ def main(api_only: bool, use_local: bool):
         uvicorn.run(app="main:app", port=12000, reload=True)
 
     else:
-        with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
+        with open(config_path, mode="r") as f:
             config = yaml.safe_load(f)
 
         urls = config["pipeline"]["urls"]

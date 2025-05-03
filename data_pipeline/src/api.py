@@ -15,7 +15,12 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import create_engine, text
 
-from data_pipeline.src.utils import ROOT_DIR, SQLITE_DB, responses, setup_logging
+from data_pipeline.src.utils import (
+    SQLITE_DB,
+    config_path,
+    responses,
+    setup_logging,
+)
 
 setup_logging()
 
@@ -25,10 +30,12 @@ service_desc = "API for querying the data pipeline"
 app = fastapi.FastAPI(description=service_desc)
 security = HTTPBasic()
 limiter = Limiter(
-    key_func=get_remote_address, strategy="fixed-window", storage_uri="memory://"
+    key_func=get_remote_address,
+    strategy="fixed-window",
+    storage_uri="memory://",
 )
 
-with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
+with open(config_path, mode="r") as f:
     config = yaml.safe_load(f)
 
 table_name = config["pipeline"]["destination_table"]
@@ -62,13 +69,21 @@ def get_current_username(
 
 
 class RequestParams(BaseModel):
-    source_table: str = Field(default=table_name, description="Source database table")
+    source_table: str = Field(
+        default=table_name, description="Source database table"
+    )
     limit: Optional[int] = Field(
         default=5, le=1000, description="Number of records to fetch"
     )
-    start_date: str = Field(default=start_time, description="Start of the date range")
-    end_date: str = Field(default=end_time, description="End of the date range")
-    cursor: Optional[int] = Field(default=None, description="The last seen record id")
+    start_date: str = Field(
+        default=start_time, description="Start of the date range"
+    )
+    end_date: str = Field(
+        default=end_time, description="End of the date range"
+    )
+    cursor: Optional[int] = Field(
+        default=None, description="The last seen record id"
+    )
 
 
 @app.post("/get_data", dependencies=[Depends(get_current_username)])
@@ -103,7 +118,11 @@ def get_data(params: RequestParams, request: Request):
 
         data = [dict(row._mapping) for row in res]
         next_cursor = data[-1]["id"] if data else None
-        payload = {"data": data, "next_cursor": next_cursor, **responses.get("SUCCESS")}
+        payload = {
+            "data": data,
+            "next_cursor": next_cursor,
+            **responses.get("SUCCESS"),
+        }
         status_code = status.HTTP_200_OK
 
     except HTTPException as e:
