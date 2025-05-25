@@ -4,7 +4,7 @@ git log --pretty=format:"%ad %h: %s (%an)" --date=short --no-merges | sort -r | 
 BEGIN {
     order[1] = "Features"
     order[2] = "Fixes"
-    order[3] = "Changes"
+    order[3] = "Chores"
     order[4] = "Other"
 }
 {
@@ -19,7 +19,7 @@ BEGIN {
         type = "Features"
         sub(/^feat:[[:space:]]*/, "", subject)
     } else if (subject ~ /^(chore:|[Tt]est|[Uu]pdate)/) {
-        type = "Changes"
+        type = "Chores"
         sub(/^change:[[:space:]]*/, "", subject)
     } else if (subject ~ /^(fix:|[Ff]ix)/) {
         type = "Fixes"

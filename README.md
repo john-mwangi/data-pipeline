@@ -212,3 +212,9 @@ pytest is used for comprehensive testing.
 ```bash
 pytest tests/test_pipeline.py tests/test_api.py -vs
 ```
+
+## Generate Changelog
+To generate a changelog, run:
+```bash
+./changelog.sh
+```

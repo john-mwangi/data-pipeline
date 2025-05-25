@@ -1,3 +1,9 @@
+2025-05-25
+
+Chores
+- e644ffe: Update repo name (John Mwangi)
+
+
 2025-05-03
 
 Features
@@ -6,10 +12,13 @@ Features
 Fixes
 - e0fac40: Minor updates (John Mwangi)
 
+Other
+- 7c550ab: docs: Update changelog (John Mwangi)
+
 
 2025-04-03
 
-Changes
+Chores
 - 7212fdb: Update tests (John Mwangi)
 
 
@@ -20,7 +29,7 @@ Features
 - 8421e98: Add requirements.txt (John Mwangi)
 - 768a4ce: Create package (John Mwangi)
 
-Changes
+Chores
 - fd3e78a: Test pipeline (John Mwangi)
 - f97de72: Update cd (John Mwangi)
 - b5c37c5: Update pipeline test (John Mwangi)
@@ -48,7 +57,7 @@ Features
 Fixes
 - 89c688b: Fix variable naming (John Mwangi)
 
-Changes
+Chores
 - ea3be30: Update yaml (John Mwangi)
 - d1ae6b2: Update main.py (John Mwangi)
 - cbe5b1c: Update validations (John Mwangi)
@@ -76,7 +85,7 @@ Fixes
 - f5ead75: Fix log (John Mwangi)
 - a945eb1: Fix table name (John Mwangi)
 
-Changes
+Chores
 - 1386e10: Update function param (John Mwangi)
 
 Other
