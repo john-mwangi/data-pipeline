@@ -205,7 +205,7 @@ Use Basic Auth with credentials from config.yaml (default: admin/admin)
 ### Documentation
 The Swagger documentation is available at `http://localhost:12000/docs`.
 
-![alt text](api.png "An image of the API")
+![alt text](FastAPI-Swagger-UI.png "A screenshot of the API")
 
 ## Testing
 pytest is used for comprehensive testing.
