@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/john-mwangi/data_pipeline"
+Repository = "https://github.com/john-mwangi/data-pipeline"
 
 # ref: https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
 [tool.setuptools.packages.find]

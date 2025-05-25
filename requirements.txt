@@ -6,7 +6,7 @@ cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.1.8
 colorama==0.4.6
-data-pipeline @ git+https://github.com/john-mwangi/data_pipeline.git@main
+data-pipeline @ git+https://github.com/john-mwangi/data-pipeline.git@main
 Deprecated==1.2.18
 dnspython==2.7.0
 email_validator==2.2.0
