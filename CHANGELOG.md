@@ -2,6 +2,8 @@
 
 Chores
 - e644ffe: Update repo name (John Mwangi)
+- 9ac0f47: Update readme (John Mwangi)
+- 0f3de9e: Update API screenshot (John Mwangi)
 - 00579aa: Update changelog (John Mwangi)
 
 
