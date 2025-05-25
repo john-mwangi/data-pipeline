@@ -97,7 +97,7 @@ This combination provides:
 ```
 ├── .gitignore                 
 ├── README.md                  # Project documentation
-├── api.png                    # API screenshot
+├── FastAPI-Swagger-UI.png     # API screenshot
 ├── data_pipeline/             # Python package
     │
     ├── db/                    
@@ -194,7 +194,7 @@ All operations are logged with timestamps and severity levels.
   * Parameters:
     * `limit`: Number of records to return (max 1000)
     * `start_date, end_date`: Date range filter
-    * `cursor`: Pagination cursor
+    * `cursor`: Last seen record id
 * `GET /users/me` - Basic authentication test endpoint
 
 ### Access & Authentication
