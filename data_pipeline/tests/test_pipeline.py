@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 from data_pipeline.src.pipeline import Pipeline, main
-from data_pipeline.src.utils import ROOT_DIR, DataOutput, FileType
+from data_pipeline.src.utils import ROOT_DIR, DataOutput, FileType, config_path
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def local_files():
 
 @pytest.fixture
 def remote_urls():
-    with open(ROOT_DIR / "src/config.yaml") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
     return config["pipeline"]["urls"]
 
@@ -52,6 +52,8 @@ def test_pipeline_process_data(local_files):
 
 
 def test_main(local_files):
-    filtered = {k: v for k, v in local_files.items() if k in FileType._member_names_}
+    filtered = {
+        k: v for k, v in local_files.items() if k in FileType._member_names_
+    }
     for _, v in filtered.items():
         main(file_path=Path(v), use_local=True)

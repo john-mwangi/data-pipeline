@@ -7,7 +7,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from data_pipeline.src.api import app
-from data_pipeline.src.utils import ROOT_DIR
+from data_pipeline.src.utils import config_path
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def client():
 
 @pytest.fixture
 def auth_header():
-    with open(ROOT_DIR / "src/config.yaml") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
     username = config["api"]["admin"]["username"]
     password = config["api"]["admin"]["password"]
@@ -42,7 +42,7 @@ def test_get_data_endpoint(client, auth_header):
 
 @pytest.fixture
 def rate_limits():
-    with open(ROOT_DIR / "src/config.yaml") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
     return {
         "per_second": config["api"]["rate_limits"]["per_second"],
@@ -53,7 +53,9 @@ def rate_limits():
 def test_pagination(client, auth_header, rate_limits):
     time.sleep(rate_limits["per_second"] + 0.1)
 
-    response1 = client.post("/get_data", headers=auth_header, json={"limit": 1})
+    response1 = client.post(
+        "/get_data", headers=auth_header, json={"limit": 1}
+    )
     assert response1.status_code == 200
     cursor = response1.json()["next_cursor"]
 

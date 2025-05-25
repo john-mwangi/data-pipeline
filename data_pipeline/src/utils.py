@@ -5,9 +5,17 @@ from pathlib import Path
 
 import pandera.polars as pa
 
-ALLOWED_COUNTRIES = ["Australia", "India", "USA", "UK", "Canada", "New Zealand"]
+ALLOWED_COUNTRIES = [
+    "Australia",
+    "India",
+    "USA",
+    "UK",
+    "Canada",
+    "New Zealand",
+]
 ROOT_DIR = Path(__file__).parent.parent
 SQLITE_DB = ROOT_DIR / "db/pipeline.db"
+config_path = ROOT_DIR / "src/config.yaml"
 
 
 def setup_logging(level=logging.INFO):

@@ -132,8 +132,8 @@ This combination provides:
 ## Installation Steps
 1. Clone the repository:
 ```bash
-git clone https://github.com/john-mwangi/data_pipeline
-cd data_pipeline
+git clone https://github.com/john-mwangi/data-pipeline
+cd data-pipeline
 ```
 
 2. Create and activate a virtual environment (recommended):
@@ -151,7 +151,7 @@ pip install -r requirements.txt
 Running the Pipeline and API.
 ```bash
 # cd to main.py directory
-cd data_pipeline
+cd data-pipeline
 
 # Run both pipeline and API (using remote data sources)
 python main.py
@@ -211,4 +211,10 @@ The Swagger documentation is available at `http://localhost:12000/docs`.
 pytest is used for comprehensive testing.
 ```bash
 pytest tests/test_pipeline.py tests/test_api.py -vs
+```
+
+## Changelog
+To generate a changelog, run:
+```bash
+./changelog.sh
 ```

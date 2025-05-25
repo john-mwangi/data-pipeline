@@ -3,7 +3,6 @@
 import json
 import logging
 import re
-import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -16,15 +15,15 @@ import polars.selectors as cs
 import requests
 import yaml
 from pandera.errors import SchemaErrors
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 
 from data_pipeline.src.utils import (
-    ROOT_DIR,
     SQLITE_DB,
     DataInput,
     DataOutput,
     FileType,
+    config_path,
     setup_logging,
 )
 
@@ -61,7 +60,9 @@ class Pipeline:
             data = pl.scan_csv(self.url)
 
         if file_type == FileType.json.name:
-            df = pd.read_json(self.url, convert_axes=False, convert_dates=False)
+            df = pd.read_json(
+                self.url, convert_axes=False, convert_dates=False
+            )
             data = pl.from_pandas(df).lazy()
 
         # clean the column names
@@ -100,7 +101,9 @@ class Pipeline:
 
         # convert price to float
         data = data.with_columns(
-            pl.col("amount").str.replace_all(pattern=r"\D", value="").cast(pl.Float64())
+            pl.col("amount")
+            .str.replace_all(pattern=r"\D", value="")
+            .cast(pl.Float64())
         )
 
         return data
@@ -108,13 +111,14 @@ class Pipeline:
     @staticmethod
     def validate_data(data: pl.LazyFrame) -> tuple[bool, pl.LazyFrame]:
         # validate output schema
+        validation_result = False
+
         try:
             DataOutput.validate(data.collect(), lazy=True)
             logger.info("data validation was successful")
             validation_result = True
         except SchemaErrors as e:
             logger.exception(e)
-            validation_result = False
 
         ## dq metrics
         # summary stats on categorical cols
@@ -159,16 +163,15 @@ class Pipeline:
     def save_data(self, data: pl.LazyFrame, table_name: str):
         if not SQLITE_DB.exists():
             SQLITE_DB.parent.mkdir(parents=True, exist_ok=True)
-
-            sqlite3.connect(SQLITE_DB)
+            engine = create_engine(f"sqlite:///{SQLITE_DB}")
             logger.info(f"database file created at {SQLITE_DB}")
+        else:
+            engine = create_engine(f"sqlite:///{SQLITE_DB}")
 
         try:
-            last_id = (
-                sqlite3.connect(SQLITE_DB)
-                .execute(f"SELECT COUNT(*) as last_id FROM {table_name}")
-                .fetchone()[0]
-            )
+            id_query = f"SELECT COUNT(*) as last_id FROM {table_name};"
+            with engine.connect() as conn:
+                last_id = conn.execute(text(id_query)).fetchone()[0]
         except Exception as e:
             last_id = 0
 
@@ -182,11 +185,11 @@ class Pipeline:
         ).with_row_index(name="id", offset=last_id + 1)
 
         logger.info(f"saving info to {table_name} table...")
-        engine = create_engine(f"sqlite:///{SQLITE_DB}")
-
         try:
             data.collect().write_database(
-                table_name=table_name, connection=engine, if_table_exists="append"
+                table_name=table_name,
+                connection=engine,
+                if_table_exists="append",
             )
 
         except OperationalError as e:
@@ -194,7 +197,7 @@ class Pipeline:
 
 
 def main(url: str = None, use_local: bool = False, file_path: Path = None):
-    with open(ROOT_DIR / "src/config.yaml", mode="r") as f:
+    with open(config_path, mode="r") as f:
         config = yaml.safe_load(f)
 
     table_name = config["pipeline"]["destination_table"]
@@ -210,6 +213,7 @@ def main(url: str = None, use_local: bool = False, file_path: Path = None):
     if file_exists == False:
         msg = f"the file does not exist in the specified {url}"
         logger.error(msg)
+        raise ValueError(msg)
 
     pipeline = Pipeline(url=url)
 
