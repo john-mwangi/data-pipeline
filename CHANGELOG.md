@@ -2,6 +2,7 @@
 
 Chores
 - e644ffe: Update repo name (John Mwangi)
+- 00579aa: Update changelog (John Mwangi)
 
 
 2025-05-03
