@@ -1,9 +1,21 @@
+2025-05-29
+
+Chores
+- fecf625: Update logger (John Mwangi)
+
+
+2025-05-26
+
+Other
+- 6103d31: Minor docs update (John Mwangi)
+
+
 2025-05-25
 
 Chores
 - e644ffe: Update repo name (John Mwangi)
 - 9ac0f47: Update readme (John Mwangi)
-- 0f3de9e: Update API screenshot (John Mwangi)
+- 2d81983: Update API screenshot (John Mwangi)
 - 00579aa: Update changelog (John Mwangi)
 
 

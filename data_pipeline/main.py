@@ -10,7 +10,6 @@ from data_pipeline.src.pipeline import main as pipeline_main
 from data_pipeline.src.utils import ROOT_DIR, config_path, setup_logging
 
 setup_logging()
-
 logger = logging.getLogger(__name__)
 
 

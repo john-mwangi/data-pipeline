@@ -28,7 +28,6 @@ from data_pipeline.src.utils import (
 )
 
 setup_logging()
-
 logger = logging.getLogger(__name__)
 
 

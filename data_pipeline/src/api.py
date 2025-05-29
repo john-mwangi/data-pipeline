@@ -23,7 +23,6 @@ from data_pipeline.src.utils import (
 )
 
 setup_logging()
-
 logger = logging.getLogger(__name__)
 
 service_desc = "API for querying the data pipeline"

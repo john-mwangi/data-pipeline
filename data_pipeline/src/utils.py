@@ -20,7 +20,9 @@ config_path = ROOT_DIR / "src/config.yaml"
 
 def setup_logging(level=logging.INFO):
     logging.basicConfig(
-        level=level, format="%(asctime)s %(levelname)s %(message)s", force=True
+        level=level,
+        format="%(asctime)s %(levelname)s %(filename)s:%(lineno)d %(message)s",
+        force=True,
     )
 
 
