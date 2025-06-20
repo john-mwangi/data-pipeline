@@ -11,3 +11,4 @@ api:
   rate_limits:
     per_minute: 30
     per_second: 1
+  version: /v1
