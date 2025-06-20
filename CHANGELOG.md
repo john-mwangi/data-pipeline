@@ -1,13 +1,19 @@
+2025-06-20
+
+Features
+- c09f1cf: Implement API versioning (John Mwangi)
+
+
 2025-05-29
 
 Chores
-- fecf625: Update logger (John Mwangi)
+- b50ff23: Update logger (John Mwangi)
 
 
 2025-05-26
 
 Other
-- 6103d31: Minor docs update (John Mwangi)
+- 1ac2090: Minor docs update (John Mwangi)
 
 
 2025-05-25
@@ -15,7 +21,7 @@ Other
 Chores
 - e644ffe: Update repo name (John Mwangi)
 - 9ac0f47: Update readme (John Mwangi)
-- 2d81983: Update API screenshot (John Mwangi)
+- 0f63839: Update API screenshot (John Mwangi)
 - 00579aa: Update changelog (John Mwangi)
 
 
