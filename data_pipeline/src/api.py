@@ -7,7 +7,7 @@ from typing import Annotated, Optional
 
 import fastapi
 import yaml
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
@@ -25,15 +25,6 @@ from data_pipeline.src.utils import (
 setup_logging()
 logger = logging.getLogger(__name__)
 
-service_desc = "API for querying the data pipeline"
-app = fastapi.FastAPI(description=service_desc)
-security = HTTPBasic()
-limiter = Limiter(
-    key_func=get_remote_address,
-    strategy="fixed-window",
-    storage_uri="memory://",
-)
-
 with open(config_path, mode="r") as f:
     config = yaml.safe_load(f)
 
@@ -43,6 +34,18 @@ rate_per_minute = config["api"]["rate_limits"]["per_minute"]
 rate_per_second = config["api"]["rate_limits"]["per_second"]
 start_time = str(date.today()) + " 00:00:00"
 end_time = str(date.today() + timedelta(days=1)) + " 00:00:00"
+api_version = config["api"]["version"]
+service_desc = "API for querying the data pipeline"
+
+app = fastapi.FastAPI(description=service_desc)
+security = HTTPBasic()
+limiter = Limiter(
+    key_func=get_remote_address,
+    strategy="fixed-window",
+    storage_uri="memory://",
+)
+
+v1_router = APIRouter(prefix=api_version)
 
 
 def get_current_username(
@@ -85,7 +88,7 @@ class RequestParams(BaseModel):
     )
 
 
-@app.post("/get_data", dependencies=[Depends(get_current_username)])
+@v1_router.post("/get_data", dependencies=[Depends(get_current_username)])
 @limiter.limit(f"{rate_per_second}/second", per_method=True)
 @limiter.limit(f"{rate_per_minute}/minute", per_method=True)
 def get_data(params: RequestParams, request: Request):
@@ -132,6 +135,9 @@ def get_data(params: RequestParams, request: Request):
     return JSONResponse(content=payload, status_code=status_code)
 
 
-@app.get("/users/me")
+@v1_router.get("/users/me")
 def read_current_user(username: Annotated[str, Depends(get_current_username)]):
     return {"username": username}
+
+
+app.include_router(v1_router)
